@@ -15,7 +15,7 @@ You will need to edit the _Operator_ with the location of the newly built image.
 
 ```bash
 sed -i 's|sjwoodman|DH_ORG|g' kafkaeventsource-operator/deploy/operator.yaml
-sed -i 's|sjwoodman|DH_ORG|g' kafkaeventsource-operator/pkg/controller/kafkaeventsource
+sed -i 's|sjwoodman|DH_ORG|g' operator/pkg/controller/kafkaeventsource/kafkaeventsource_controller.go
 ```
 
 ## Usage
@@ -30,16 +30,16 @@ The sample connects to a [Strimzi](http://strimzi.io/quickstarts/okd/) Kafka Bro
 1. Install the KafkaEventSource CRD
 
     ```bash
-    kubectl create -f deploy/crds/sources_v1alpha1_kafkaeventsource_crd.yaml
+    kubectl create -f kafkaeventsource-operator/deploy/crds/sources_v1alpha1_kafkaeventsource_crd.yaml
     ```
 
 1. Setup RBAC and deploy the KafkaEventSource-operator:
 
     ```bash
-    kubectl create -f deploy/service_account.yaml
-    kubectl create -f deploy/role.yaml
-    kubectl create -f deploy/role_binding.yaml
-    kubectl create -f deploy/operator.yaml
+    kubectl create -f kafkaeventsource-operator/deploy/service_account.yaml
+    kubectl create -f kafkaeventsource-operator/deploy/role.yaml
+    kubectl create -f kafkaeventsource-operator/deploy/role_binding.yaml
+    kubectl create -f kafkaeventsource-operator/deploy/operator.yaml
     ```
 
 1. Verify that the KafkaEventSource-operator is up and running:
@@ -54,19 +54,19 @@ The sample connects to a [Strimzi](http://strimzi.io/quickstarts/okd/) Kafka Bro
     If you don't do this, defaults will be used for the number of partitions etc.
 
     ```bash
-    kubectl create -f sample/00-topic.yaml
+    kubectl create -f kafkaeventsource-operator/sample/00-topic.yaml
     ```
 
-1. Create a KafkaEventSource and wire it up to a function. Either
+1. Create an instanace of a KafkaEventSource and wire it up to a function. This will create the necessary `Channel` and `Subscription` objects. 
 
     ```bash
-    kubectl create -f sample/01-channel.yaml -n myproject
-    kubectl create -f sample/02-eventsource.yaml -n myproject
-    kubectl create -f sample/03-service.yaml -n myproject
-    kubectl create -f sample/subscription.yaml -n myproject
+    kubectl create -f kafkaeventsource-operator/sample/01-channel.yaml -n myproject
+    kubectl create -f kafkaeventsource-operator/sample/02-eventsource.yaml -n myproject
+    kubectl create -f kafkaeventsource-operator/sample/03-service.yaml -n myproject
+    kubectl create -f kafkaeventsource-operator/sample/04-subscription.yaml -n myproject
     ```
 
-1. Verify that the EventSource has been started
+1. Verify that the EventSource has been started (note that your pod suffix will be different).
 
     ```bash
     $ kubectl get pods
@@ -77,7 +77,7 @@ The sample connects to a [Strimzi](http://strimzi.io/quickstarts/okd/) Kafka Bro
 1. Send some Kafka messages
 
     ```bash
-    $ oc exec -it my-cluster-kafka-0 -- bin/kafka-console-producer.sh --broker-list localhost:9092 --topic input
+    $ oc exec -it my-cluster-kafka-0 -- bin/kafka-console-producer.sh --broker-list localhost:9092 --topic testtopic
     > test message
     ```
 
@@ -92,8 +92,8 @@ If you are consuming the CloudEvents using an SDK this value should be present i
 
 ## Building EventSource Operator
 
-The KafkaEventSource Operator is built using the Operator SDK.
-To build the Operator image use the following command. 
+The KafkaEventSource Operator is built using the [Operator SDK](https://github.com/operator-framework/operator-sdk).
+To build the Operator image use the following command.
 Note that you will need to change the name of the image created in the `deploy/operator.yaml` to match you image name.
 
 ```bash
