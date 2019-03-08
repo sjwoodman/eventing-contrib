@@ -12,7 +12,6 @@ import (
 	"github.com/Shopify/sarama"
 	cluster "github.com/bsm/sarama-cluster"
 	"github.com/google/uuid"
-
 	"github.com/knative/eventing-sources/contrib/kafka/eventsource/pkg/eventsourceconfig"
 	"github.com/knative/pkg/cloudevents"
 )
@@ -96,28 +95,26 @@ func main() {
 				// fmt.Fprintf(os.Stdout, "%s/%d/%d\t%s\t%s\n", msg.Topic, msg.Partition, msg.Offset, msg.Key, msg.Value)
 				log.Printf("Received %s", msg.Value)
 
-				var jsonPayload map[string]interface{}
-				err := json.Unmarshal(msg.Value, &jsonPayload)
+				var payload interface{}
+
+				err := json.Unmarshal(msg.Value, &payload)
 				if err != nil {
 					log.Printf("Unable to unmarshal message value: %s", msg.Value)
 					log.Printf("Error: %s", err)
-					//todo: Fix error catching as above doesn't fire
-					posterr := postMessage(msg.Key, msg.Timestamp, eventsourceconfig.KafkaTopic, eventsourceconfig.Target, msg.Partition, msg.Offset, "application/json", msg.Value)
-					if posterr == nil {
-						consumer.MarkOffset(msg, "") // mark message as processed
-					} else {
-						log.Printf("Error posting message: %s", err)
-					}
 
-				} else {
-					//valid JSON message
-					posterr := postMessage(msg.Key, msg.Timestamp, eventsourceconfig.KafkaTopic, eventsourceconfig.Target, msg.Partition, msg.Offset, "application/json", jsonPayload)
-					if posterr == nil {
-						consumer.MarkOffset(msg, "") // mark message as processed
-					} else {
-						log.Printf("Error posting message: %s", err)
-					}
+					// use the byte array as value
+					payload = msg.Value
+
 				}
+
+				// post
+				posterr := postMessage(eventsourceconfig.KafkaTopic, eventsourceconfig.Target, msg, payload)
+				if posterr == nil {
+					consumer.MarkOffset(msg, "") // mark message as processed
+				} else {
+					log.Printf("Error posting message: %s", err)
+				}
+
 			}
 		case <-signals:
 			return
@@ -144,8 +141,8 @@ func cloudEventsContext(key []byte, timestamp time.Time, partition int32, offset
 	}
 }
 
-func postMessage(key []byte, timestamp time.Time, topic string, target string, partition int32, offset int64, contentType string, value interface{}) error {
-	ctx := cloudEventsContext(key, timestamp, partition, offset, topic, contentType)
+func postMessage(topic string, target string, message *sarama.ConsumerMessage, value interface{}) error {
+	ctx := cloudEventsContext(message.Key, message.Timestamp, message.Partition, message.Offset, topic, "application/json")
 
 	log.Printf("Posting to %q", target)
 	// Explicitly using Binary encoding so that Istio, et. al. can better inspect
