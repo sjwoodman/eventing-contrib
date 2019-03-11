@@ -71,7 +71,7 @@ The sample connects to a [Strimzi](http://strimzi.io/quickstarts/okd/) Kafka Bro
     ```bash
     $ kubectl get pods
     NAME                                          READY     STATUS    RESTARTS   AGE
-    example-kafkaeventsource-6b6477f95d-tc4nd     2/2       Running   1          2m
+    test-kafkaeventsource-6b6477f95d-tc4nd     2/2       Running   1          2m
     ```
 
 1. Send some Kafka messages
@@ -94,7 +94,7 @@ If you are consuming the CloudEvents using an SDK this value should be present i
 
 The KafkaEventSource Operator is built using the [Operator SDK](https://github.com/operator-framework/operator-sdk).
 To build the Operator image use the following command.
-Note that you will need to change the name of the image created in the `deploy/operator.yaml` to match you image name.
+Note that you will need to change the name of the image created in the `deploy/operator.yaml` to match your image name.
 
 ```bash
 operator-sdk build DH_ORG/IMG_NAME:latest

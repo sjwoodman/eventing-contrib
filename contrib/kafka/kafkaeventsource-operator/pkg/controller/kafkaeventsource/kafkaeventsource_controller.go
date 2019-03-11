@@ -2,6 +2,7 @@ package kafkaeventsource
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"reflect"
 	"sort"
@@ -215,9 +216,9 @@ func deploymentForKafka(kes *sourcesv1alpha1.KafkaEventSource) *appsv1.Deploymen
 			Kind:       "Deployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      kes.Name,
-			Namespace: kes.Namespace,
-			Labels:    labels,
+			GenerateName: fmt.Sprintf("kafka-source-%s-", kes.Name),
+			Namespace:    kes.Namespace,
+			Labels:       labels,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: replicas,
